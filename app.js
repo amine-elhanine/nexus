@@ -21,7 +21,7 @@ async function loadLatestRelease() {
     const release = await response.json();
     const assets = release.assets || [];
     const windowsAsset = assets.find((item) => /nexus-.*-windows-x64-setup\.exe$/i.test(item.name));
-    const linuxAsset = assets.find((item) => /^nexus[-_].*linux.*\.deb$/i.test(item.name));
+    const linuxAsset = assets.find((item) => /^nexus[-_].*\.deb$/i.test(item.name));
     const version = (release.tag_name || FALLBACK_VERSION).replace(/^v/, '');
     if (!windowsAsset) throw new Error('No Windows installer in the latest release');
     const linuxStatus = linuxAsset ? 'Linux .deb ready' : 'Linux .deb not in this release';
