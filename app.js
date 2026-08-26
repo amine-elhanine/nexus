@@ -6,8 +6,10 @@ const FALLBACK_INSTALLER = 'https://github.com/L7A9/nexus-CodeWeaver-releases/re
 function setRelease(version, installer, status) {
   document.querySelectorAll('[data-version]').forEach((node) => { node.textContent = version; });
   document.querySelectorAll('[data-download]').forEach((link) => {
-    link.href = installer;
-    link.setAttribute('download', '');
+    const download = installer[link.dataset.download];
+    link.href = download || RELEASES_PAGE;
+    if (download) link.setAttribute('download', '');
+    else link.removeAttribute('download');
   });
   document.querySelectorAll('[data-download-status]').forEach((node) => { node.textContent = status; });
 }
@@ -17,12 +19,18 @@ async function loadLatestRelease() {
     const response = await fetch(RELEASE_API, { headers: { Accept: 'application/vnd.github+json' } });
     if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
     const release = await response.json();
-    const asset = (release.assets || []).find((item) => /nexus-.*-windows-x64-setup\.exe$/i.test(item.name));
+    const assets = release.assets || [];
+    const windowsAsset = assets.find((item) => /nexus-.*-windows-x64-setup\.exe$/i.test(item.name));
+    const linuxAsset = assets.find((item) => /^nexus[-_].*linux.*\.deb$/i.test(item.name));
     const version = (release.tag_name || FALLBACK_VERSION).replace(/^v/, '');
-    if (!asset) throw new Error('No Windows installer in the latest release');
-    setRelease(version, asset.browser_download_url, `v${version} · Windows x64 installer`);
+    if (!windowsAsset) throw new Error('No Windows installer in the latest release');
+    const linuxStatus = linuxAsset ? 'Linux .deb ready' : 'Linux .deb not in this release';
+    setRelease(version, {
+      windows: windowsAsset.browser_download_url,
+      linux: linuxAsset?.browser_download_url,
+    }, `v${version} · Windows x64 installer · ${linuxStatus}`);
   } catch (error) {
-    setRelease(FALLBACK_VERSION, FALLBACK_INSTALLER, `v${FALLBACK_VERSION} · Windows x64 installer`);
+    setRelease(FALLBACK_VERSION, { windows: FALLBACK_INSTALLER }, `v${FALLBACK_VERSION} · Windows x64 installer · Linux .deb unavailable`);
     console.warn('Using the fallback release link:', error);
   }
 }
