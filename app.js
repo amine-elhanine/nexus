@@ -1,42 +1,79 @@
-const RELEASE_API = 'https://api.github.com/repos/L7A9/nexus-CodeWeaver-releases/releases/latest';
-const RELEASES_PAGE = 'https://github.com/L7A9/nexus-CodeWeaver-releases/releases/latest';
-const FALLBACK_VERSION = '0.1.1';
-const FALLBACK_INSTALLER = 'https://github.com/L7A9/nexus-CodeWeaver-releases/releases/download/v0.1.1/nexus-0.1.1-windows-x64-setup.exe';
+// Always-latest download wiring for the Nexus landing page.
+//
+// The buttons never hardcode a version: on load we ask the GitHub Releases
+// API for the latest (non-draft, non-prerelease) release of L7A9/nexus and
+// point each button at its exact asset URL. If the API is unreachable
+// (rate limit, offline), the buttons keep their static fallback hrefs to
+// the releases page, so nothing ever dead-ends.
 
-function setRelease(version, installer, status) {
-  document.querySelectorAll('[data-version]').forEach((node) => { node.textContent = version; });
-  document.querySelectorAll('[data-download]').forEach((link) => {
-    const download = installer[link.dataset.download];
-    link.href = download || RELEASES_PAGE;
-    if (download) link.setAttribute('download', '');
-    else link.removeAttribute('download');
-  });
-  document.querySelectorAll('[data-download-status]').forEach((node) => { node.textContent = status; });
+const OWNER = "L7A9";
+const REPO = "nexus";
+const RELEASES_URL = `https://github.com/${OWNER}/${REPO}/releases`;
+const LATEST_API = `https://api.github.com/repos/${OWNER}/${REPO}/releases/latest`;
+
+function pickAsset(assets, rx) {
+  const list = (assets || []).filter((a) => rx.test(a.name || ""));
+  // Prefer the largest match (the full installer over stubs, if any).
+  list.sort((a, b) => (b.size || 0) - (a.size || 0));
+  return list[0] || null;
 }
 
-async function loadLatestRelease() {
-  try {
-    const response = await fetch(RELEASE_API, { headers: { Accept: 'application/vnd.github+json' } });
-    if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
-    const release = await response.json();
-    const assets = release.assets || [];
-    const windowsAsset = assets.find((item) => /nexus-.*-windows-x64-setup\.exe$/i.test(item.name));
-    const linuxAsset = assets.find((item) => /^nexus[-_].*\.deb$/i.test(item.name));
-    const version = (release.tag_name || FALLBACK_VERSION).replace(/^v/, '');
-    if (!windowsAsset) throw new Error('No Windows installer in the latest release');
-    const linuxStatus = linuxAsset ? 'Linux .deb ready' : 'Linux .deb not in this release';
-    setRelease(version, {
-      windows: windowsAsset.browser_download_url,
-      linux: linuxAsset?.browser_download_url,
-    }, `v${version} · Windows x64 installer · ${linuxStatus}`);
-  } catch (error) {
-    setRelease(FALLBACK_VERSION, { windows: FALLBACK_INSTALLER }, `v${FALLBACK_VERSION} · Windows x64 installer · Linux .deb unavailable`);
-    console.warn('Using the fallback release link:', error);
+function setVersionLine(text) {
+  document.querySelectorAll(".version-text").forEach((el) => {
+    el.textContent = text;
+  });
+}
+
+function setReleaseNotes(body) {
+  const el = document.querySelector(".release-notes");
+  if (!el || !body) return;
+  const text = String(body).trim().split("\n").slice(0, 6).join("\n").slice(0, 500);
+  if (text) {
+    el.textContent = text;
+    el.hidden = false;
   }
 }
 
-document.querySelectorAll('[data-download]').forEach((link) => {
-  link.addEventListener('click', () => { link.classList.add('is-downloading'); });
-});
-document.querySelectorAll('a[href$="/releases/latest"]').forEach((link) => { link.href = RELEASES_PAGE; });
-loadLatestRelease();
+async function wireDownloads() {
+  let release = null;
+  try {
+    const res = await fetch(LATEST_API, { headers: { Accept: "application/vnd.github+json" } });
+    if (!res.ok) throw new Error(`GitHub API: ${res.status}`);
+    release = await res.json();
+  } catch {
+    setVersionLine("Download the latest release from GitHub");
+    return;
+  }
+
+  const tag = release.tag_name || release.name || "";
+  const version = tag.replace(/^v/, "") || "latest";
+  const published = release.published_at ? new Date(release.published_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "";
+
+  const setup = pickAsset(release.assets, /setup.*\.exe$/i);
+  const portable = pickAsset(release.assets, /portable.*\.exe$/i);
+
+  // Primary buttons → exact Setup installer asset (what auto-update serves).
+  document.querySelectorAll('[data-dl="setup"]').forEach((a) => {
+    if (setup) a.href = setup.browser_download_url;
+    const label = a.querySelector(".dl-label");
+    if (label) label.textContent = setup ? `Download Nexus v${version}` : "Download for Windows";
+  });
+
+  // Secondary buttons → Portable asset, or the releases page if absent.
+  document.querySelectorAll('[data-dl="portable"]').forEach((a) => {
+    if (portable) a.href = portable.browser_download_url;
+  });
+
+  setVersionLine(
+    setup
+      ? `Latest: v${version}${published ? ` · released ${published}` : ""} · ${(setup.size / 1048576).toFixed(0)} MB`
+      : `Latest: v${version} — see all files on GitHub`
+  );
+  setReleaseNotes(release.body);
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", wireDownloads);
+} else {
+  wireDownloads();
+}
