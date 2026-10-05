@@ -1,33 +1,22 @@
 /* ============================================================
-   Nexus — landing page v2 ("the page is a run")
+   Nexus — landing page v3 (honest by design)
    1. Live GitHub Releases wiring (version pills + download links)
-   2. Boot overlay (skippable, once per session, JS-injected)
-   3. Hex particle field (canvas, mouse-reactive)
-   4. Hero plan reveal + scramble/decode text
-   5. Run rail (scroll progress) + scrollspy
+   2. Theme picker (nav button + swatch popover, persisted)
+   3. Hex particle field (canvas, mouse-reactive, theme-aware)
+   4. Scramble/decode text
+   5. Run rail (scroll progress) + hero plan card scroll states
    6. Loop animation (Brief→Plan→Act→Verify→Done)
-   7. Playground terminal (typeable, with easter eggs)
-   8. Undo easter egg (chip + ctrl/cmd+z + toasts)
-   9. Reveal-on-scroll, mobile nav, copy button
+   7. Undo easter egg (chip + ctrl/cmd+z + toasts)
+   8. Reveal-on-scroll, mobile nav, copy button
    No dependencies. Degrades gracefully without JS or network.
+   No terminal chrome, no mock app UI — the page never pretends
+   to be the product.
    ============================================================ */
 
 (() => {
   "use strict";
 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  /* ============ 0. Random app appearance theme ============ */
-
-  function initRandomTheme() {
-    const themes = ["dark-white", "nexus", "midnight", "grape", "ember", "crimson", "lagoon", "moss", "alabaster", "daylight"];
-    let previous = null;
-    try { previous = sessionStorage.getItem("nexus-landing-theme"); } catch { /* storage may be unavailable */ }
-    const choices = themes.filter((theme) => theme !== previous);
-    const theme = choices[Math.floor(Math.random() * choices.length)] || themes[0];
-    document.documentElement.setAttribute("data-theme", theme);
-    try { sessionStorage.setItem("nexus-landing-theme", theme); } catch { /* storage may be unavailable */ }
-  }
 
   /* ============ 1. GitHub Releases ============ */
 
@@ -107,56 +96,94 @@
     });
   }
 
-  /* ============ 2. Boot overlay ============ */
+  /* ============ 2. Theme picker ============ */
 
-  function initBoot() {
-    let seen = false;
-    try { seen = sessionStorage.getItem("nexus-boot-v2") === "1"; } catch { /* ok */ }
-    if (seen || reduced) return;
+  // Same appearance themes as the desktop Settings picker. "nexus" is the
+  // default palette (no attribute needed).
+  const THEMES = [
+    { id: "nexus", label: "Nexus", sw: "#34d399" },
+    { id: "dark-white", label: "Dark White", sw: "#f5f5f5" },
+    { id: "midnight", label: "Midnight", sw: "#38bdf8" },
+    { id: "grape", label: "Grape", sw: "#a78bfa" },
+    { id: "ember", label: "Ember", sw: "#fb923c" },
+    { id: "crimson", label: "Crimson", sw: "#fb7185" },
+    { id: "lagoon", label: "Lagoon", sw: "#2dd4bf" },
+    { id: "moss", label: "Moss", sw: "#4ade80" },
+    { id: "alabaster", label: "Alabaster", sw: "#ea580c" },
+    { id: "daylight", label: "Daylight", sw: "#059669" },
+  ];
+  const THEME_KEY = "nexus-landing-theme";
+  let onThemeChange = null; // set by the hex field to re-ink the canvas
 
-    const boot = document.createElement("div");
-    boot.className = "boot";
-    boot.setAttribute("aria-hidden", "true");
-    // show the release version only if we actually have one (cache or API) — never hardcoded
-    const cachedNow = loadCachedRelease();
-    const bootVer = cachedNow ? ` v${versionFromTag(cachedNow.tag_name) ?? ""}`.trimEnd() : "";
-    const lines = [
-      `<span class="hl">nexus${bootVer} — desktop agent</span>`,
-      '▸ mounting system skills ......... <span class="ok">53</span>',
-      "▸ linking providers .............. <span class='ok'>15</span>",
-      "▸ loading rule packs ............. <span class='ok'>122</span>",
-      "▸ attaching subagents ............ <span class='ok'>68</span>",
-      '<span class="ok">ready</span> — welcome. scroll to run.',
-    ];
-    boot.innerHTML = `<div class="boot-inner">${lines
-      .map((l) => `<div class="boot-line">${l}</div>`)
-      .join("")}<div class="boot-skip">click or scroll to skip</div></div>`;
-    document.body.appendChild(boot);
-    try { sessionStorage.setItem("nexus-boot-v2", "1"); } catch { /* ok */ }
+  function currentThemeId() {
+    return document.documentElement.getAttribute("data-theme") || "nexus";
+  }
 
-    const els = boot.querySelectorAll(".boot-line");
-    let done = false;
-    document.body.style.overflow = "hidden";
+  function applyTheme(id, persist) {
+    if (id === "nexus") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", id);
+    if (persist) {
+      try { localStorage.setItem(THEME_KEY, id); } catch { /* private mode — fine */ }
+    }
+    const dot = document.getElementById("themeDot");
+    if (dot) {
+      const t = THEMES.find((x) => x.id === id);
+      if (t) dot.style.background = t.sw;
+    }
+    document.querySelectorAll(".theme-item").forEach((el) => {
+      el.setAttribute("aria-checked", String(el.dataset.themeId === id));
+    });
+    if (onThemeChange) onThemeChange();
+  }
 
-    function finish() {
-      if (done) return;
-      done = true;
-      els.forEach((el) => el.classList.add("on"));
-      document.body.style.overflow = "";
-      boot.classList.add("done");
-      setTimeout(() => boot.remove(), 600);
-      ["click", "keydown", "wheel", "touchstart"].forEach((ev) =>
-        window.removeEventListener(ev, finish, true)
-      );
-      document.dispatchEvent(new CustomEvent("nexus:boot-done"));
+  function initThemePicker() {
+    const btn = document.getElementById("themeBtn");
+    const pop = document.getElementById("themePop");
+    if (!btn || !pop) return;
+
+    THEMES.forEach((t) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "theme-item";
+      item.dataset.themeId = t.id;
+      item.setAttribute("role", "menuitemradio");
+      item.innerHTML = `<span class="sw" style="--sw:${t.sw}" aria-hidden="true"></span><span>${t.label}</span><span class="tick" aria-hidden="true">✓</span>`;
+      item.addEventListener("click", () => {
+        applyTheme(t.id, true);
+        close();
+        btn.focus({ preventScroll: true });
+      });
+      pop.appendChild(item);
+    });
+
+    function open() {
+      pop.hidden = false;
+      btn.setAttribute("aria-expanded", "true");
+      const first = pop.querySelector(".theme-item");
+      if (first) first.focus({ preventScroll: true });
+    }
+    function close() {
+      pop.hidden = true;
+      btn.setAttribute("aria-expanded", "false");
     }
 
-    ["click", "keydown", "wheel", "touchstart"].forEach((ev) =>
-      window.addEventListener(ev, finish, { capture: true, once: false, passive: true })
-    );
+    btn.addEventListener("click", () => {
+      pop.hidden ? open() : close();
+    });
+    document.addEventListener("click", (e) => {
+      if (pop.hidden) return;
+      if (!pop.contains(e.target) && e.target !== btn && !btn.contains(e.target)) close();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !pop.hidden) {
+        close();
+        btn.focus({ preventScroll: true });
+      }
+    });
 
-    els.forEach((el, i) => setTimeout(() => el.classList.add("on"), 130 + i * 190));
-    setTimeout(finish, 130 + lines.length * 190 + 800);
+    // The head inline script already applied the saved theme (no flash);
+    // sync the picker state with it.
+    applyTheme(currentThemeId(), false);
   }
 
   /* ============ 3. Hex particle field ============ */
@@ -168,6 +195,24 @@
     let w = 0, h = 0, dpr = 1;
     let hexes = [];
     const mouse = { x: -9999, y: -9999 };
+
+    // theme-aware ink: follow the --green token of the active theme
+    let ink = [52, 211, 153];
+    function refreshInk() {
+      const v = getComputedStyle(document.documentElement).getPropertyValue("--green").trim();
+      const m = /^#([0-9a-f]{6})$/i.exec(v);
+      if (m) {
+        ink = [
+          parseInt(m[1].slice(0, 2), 16),
+          parseInt(m[1].slice(2, 4), 16),
+          parseInt(m[1].slice(4, 6), 16),
+        ];
+      }
+    }
+    onThemeChange = () => {
+      refreshInk();
+      if (reduced) draw();
+    };
 
     function hexPath(x, y, r, rot) {
       ctx.beginPath();
@@ -182,13 +227,14 @@
 
     function draw() {
       ctx.clearRect(0, 0, w, h);
+      const [r, g, b] = ink;
       for (const hx of hexes) {
         hexPath(hx.x, hx.y, hx.r, hx.rot);
         if (hx.filled) {
-          ctx.fillStyle = `rgba(52, 211, 153, ${hx.alpha * 0.5})`;
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${hx.alpha * 0.5})`;
           ctx.fill();
         } else {
-          ctx.strokeStyle = `rgba(52, 211, 153, ${hx.alpha})`;
+          ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${hx.alpha})`;
           ctx.lineWidth = 1;
           ctx.stroke();
         }
@@ -256,29 +302,12 @@
       mouse.y = -9999;
     });
 
+    refreshInk();
     resize();
     if (!reduced) requestAnimationFrame(tick);
   }
 
-  /* ============ 4. Hero plan reveal + scramble text ============ */
-
-  function initHeroPlan() {
-    const lines = document.querySelectorAll("#planBody .t-line");
-    if (!lines.length) return;
-    if (reduced) {
-      lines.forEach((l) => l.classList.add("on"));
-      return;
-    }
-    let started = false;
-    const start = () => {
-      if (started) return;
-      started = true;
-      lines.forEach((l, i) => setTimeout(() => l.classList.add("on"), 200 + i * 170));
-    };
-    document.addEventListener("nexus:boot-done", start, { once: true });
-    // fallback if boot never fires (repeat visitor where boot is skipped)
-    setTimeout(start, 600);
-  }
+  /* ============ 4. Scramble/decode text ============ */
 
   const SCRAMBLE_CHARS = "!<>-_\\/[]{}—=+*^?#______";
   function scramble(el) {
@@ -322,13 +351,12 @@
     els.forEach((el) => io.observe(el));
   }
 
-  /* ============ 5. Run rail + scrollspy ============ */
+  /* ============ 5. Run rail + hero plan card ============ */
 
   const STEPS = [
     ["run", "run"],
     ["surfaces", "surfaces"],
     ["loop", "how it thinks"],
-    ["playground", "drive it"],
     ["trust", "trust"],
     ["download", "get it"],
   ];
@@ -349,6 +377,7 @@
     const fill = document.getElementById("railFill");
     const label = document.getElementById("railLabel");
     const railSteps = document.querySelectorAll(".rail-step");
+    const planItems = document.querySelectorAll("#planSteps > li");
     if (!fill || !railSteps.length) return;
 
     let ticking = false;
@@ -365,6 +394,16 @@
         el.classList.toggle("done", i < current);
       });
       if (label) label.textContent = `${String(current + 1).padStart(2, "0")} · ${STEPS[current][1]}`;
+
+      // hero plan card: step i links to STEPS[i + 1]; the agent "executes"
+      // as the visitor scrolls
+      planItems.forEach((li, i) => {
+        const idx = i + 1;
+        li.classList.toggle("active", idx === current);
+        li.classList.toggle("done", idx < current);
+        const no = li.querySelector(".ps-no");
+        if (no) no.textContent = idx < current ? "✓" : no.dataset.no;
+      });
     }
     window.addEventListener(
       "scroll",
@@ -394,7 +433,7 @@
       },
       { rootMargin: "-40% 0px -55% 0px" }
     );
-    ["surfaces", "loop", "playground", "trust", "download", "man"]
+    ["surfaces", "loop", "trust", "download", "man"]
       .map((id) => document.getElementById(id))
       .filter(Boolean)
       .forEach((s) => spy.observe(s));
@@ -451,185 +490,7 @@
     io.observe(flow);
   }
 
-  /* ============ 7. Playground terminal ============ */
-
-  function initPlayground() {
-    const out = document.getElementById("playOut");
-    const form = document.getElementById("playForm");
-    const input = document.getElementById("playInput");
-    if (!out || !form || !input) return;
-
-    const accents = ["emerald", "ocean", "ember"];
-    let checkpoint = 20;
-    const history = [];
-    let histIdx = -1;
-
-    const line = (html, cls = "") => {
-      const div = document.createElement("div");
-      div.className = `p-line ${cls}`;
-      div.innerHTML = html;
-      out.appendChild(div);
-      out.scrollTop = out.scrollHeight;
-      return div;
-    };
-    const esc = (s) =>
-      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-    const CMDS = {
-      help() {
-        line("<span class='p-hl'>available commands</span>", "p-hl");
-        [
-          ["plan / ask / auto", "the three control modes"],
-          ["verify", "run the verify supervisor (animatically)"],
-          ["undo", "step back to the previous step — try ctrl+z anywhere"],
-          ["providers", "list all 15 — including local ollama"],
-          ["skills", "what ships in the box"],
-          ["mcp", "model context protocol support"],
-          ["notebook", "the groundedness gate"],
-          ["theme", "recolor this page: emerald → ocean → ember"],
-          ["download", "jump to step 06"],
-          ["whoami / ls / clear / exit", "…you know what to do"],
-        ].forEach(([c, d]) => line(`  <span class="p-ok">${c.padEnd(18)}</span><span class="p-dim">${d}</span>`));
-      },
-      plan() {
-        line("<span class='p-hl'>plan mode</span> — recursion 40 · repairs 0", "p-warn");
-        line("hard read-only: no writes, no shell, no mcp. explore with zero side effects.", "p-dim");
-      },
-      ask() {
-        line("<span class='p-hl'>ask mode</span> — recursion 100 · repairs 3");
-        line("interactive: proposes, you approve. approval gates on risky commands.", "p-dim");
-      },
-      auto() {
-        line("<span class='p-hl'>auto mode</span> — recursion 150 · repairs 5", "p-ok");
-        line("end-to-end autonomous with a verify supervisor and self-repair.", "p-dim");
-      },
-      async verify() {
-        const steps = [
-          ["diff-first baseline … scoped to files this run touched", "p-dim"],
-          ["typecheck cascade (npm/pnpm/yarn/bun auto-detect)", "p-dim"],
-          ["test suite ………………… <span class='p-ok'>26 passed</span>", "p-ok"],
-          ["output contract ……… <span class='p-ok'>artifacts validated</span>", "p-ok"],
-          ["verdict: <span class='p-ok'>grounded · checkpoint saved · undo ready</span>", "p-hl"],
-        ];
-        for (const [html, cls] of steps) {
-          await new Promise((r) => setTimeout(r, 420));
-          line(html, cls);
-        }
-      },
-      undo() {
-        const ok = undoRewind();
-        if (ok) {
-          const current = getCurrentStep();
-          const [, name] = STEPS[current];
-          line(
-            `↩ stepped back to <span class="p-ok">${String(current + 1).padStart(2, "0")} · ${name}</span>.`
-          );
-        } else {
-          line("working tree clean — already at step 01 (top of the page).", "p-warn");
-        }
-      },
-      providers() {
-        line("<span class='p-hl'>15 providers · bring-your-own-key</span>");
-        line("openai · anthropic · google gemini · mistral · groq · xai · openrouter · deepseek · opencode zen · together · fireworks · azure openai · aws bedrock · <span class='p-ok'>ollama (local)</span> · any openai-compatible endpoint");
-        line("keys encrypted at rest with your OS keychain.", "p-dim");
-      },
-      skills() {
-        line("<span class='p-hl'>in the box:</span> 53 skills · 38 slash commands · 68 specialist subagents · 122 rule packs");
-        line("bring your own as plain SKILL.md files in .nexus/skills.", "p-dim");
-      },
-      mcp() {
-        line("<span class='p-hl'>mcp native</span> — stdio · http · sse transports");
-        line("warm reconnects, per-server fault isolation, connection tester, encrypted secrets.", "p-dim");
-      },
-      notebook() {
-        line("<span class='p-hl'>groundedness gate</span> — every answer scored 0–10 against your sources");
-        line("not covered? nexus says “not in your files” and refuses rather than guessing.", "p-dim");
-      },
-      theme() {
-        const cur = document.documentElement.getAttribute("data-accent") || "emerald";
-        const next = accents[(accents.indexOf(cur) + 1) % accents.length];
-        if (next === "emerald") document.documentElement.removeAttribute("data-accent");
-        else document.documentElement.setAttribute("data-accent", next);
-        line(`theme → <span class="p-ok">${next}</span>  (the whole page re-inked)`);
-      },
-      download() {
-        line("executing step 06 — get it…", "p-ok");
-        document.getElementById("download")?.scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
-      },
-      whoami() {
-        line("visitor@desktop — <span class='p-ok'>the human in the loop</span>. the most important role here.");
-      },
-      ls() {
-        line("surfaces/  loop/  trust/  download/   <span class='p-dim'>— it's a webpage, not your fs</span>");
-      },
-      clear() {
-        out.innerHTML = "";
-      },
-      exit() {
-        line("there is no exit. there is only <span class='p-ok'>download</span>.", "p-warn");
-        CMDS.download();
-      },
-      sudo(args) {
-        line(
-          `<span class="p-err">approval gate: DENIED</span> — “${esc(("sudo " + (args || "")).trim())}”`,
-          "p-err"
-        );
-        line("nice try. destructive commands are refused before they reach a shell.", "p-dim");
-      },
-    };
-
-    async function run(raw) {
-      const cmd = raw.trim();
-      if (!cmd) return;
-      history.unshift(cmd);
-      histIdx = -1;
-      line(`<span class="t-prompt">visitor@nexus:~$</span> ${esc(cmd)}`, "p-echo");
-      const [name, ...rest] = cmd.split(/\s+/);
-      const fn = CMDS[name.toLowerCase()];
-      if (name.toLowerCase() === "sudo") return CMDS.sudo(rest.join(" "));
-      if (fn && typeof fn === "function" && name.toLowerCase() !== "sudo") {
-        if (name.toLowerCase() === "verify" || name.toLowerCase() === "download") await fn();
-        else fn(rest.join(" "));
-      } else if (fn) {
-        fn();
-      } else {
-        line(
-          `nexus: command not found: <span class="p-err">${esc(name)}</span> — try <span class="p-ok">help</span>`,
-          "p-dim"
-        );
-      }
-    }
-
-    // greeting
-    line("nexus playground — type <span class='p-ok'>help</span> to see what i can do.", "p-hl");
-    line("this shell is a toy. the product isn't.", "p-dim");
-
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const v = input.value;
-      input.value = "";
-      run(v);
-    });
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        histIdx = Math.min(histIdx + 1, history.length - 1);
-        if (histIdx >= 0) input.value = history[histIdx];
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        histIdx = Math.max(histIdx - 1, -1);
-        input.value = histIdx === -1 ? "" : history[histIdx];
-      }
-    });
-    document.querySelectorAll(".hint-chip").forEach((chip) => {
-      chip.addEventListener("click", () => {
-        run(chip.dataset.cmd);
-        input.focus({ preventScroll: true });
-      });
-    });
-  }
-
-  /* ============ 8. Undo easter egg + toasts ============ */
+  /* ============ 7. Undo easter egg + toasts ============ */
 
   let toastTimer = null;
   function toast(text) {
@@ -732,7 +593,7 @@
     });
   }
 
-  /* ============ 9. Reveal, nav, misc ============ */
+  /* ============ 8. Reveal, nav, misc ============ */
 
   function initReveal() {
     const items = document.querySelectorAll("[data-reveal]");
@@ -797,16 +658,13 @@
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
-  initRandomTheme();
   initReleases();
-  initBoot();
+  initThemePicker();
   initHexField();
-  initHeroPlan();
   initScramble();
   initRail();
   initScrollspy();
   initLoop();
-  initPlayground();
   initUndo();
   initReveal();
   initNav();
