@@ -195,6 +195,10 @@
     let w = 0, h = 0, dpr = 1;
     let hexes = [];
     const mouse = { x: -9999, y: -9999 };
+    // Touch devices get a static field: no cursor to repel, and a forever
+    // rAF loop under iOS Safari's fixed blurred layers is the classic
+    // renderer-memory crash. Desktop keeps the animated field.
+    const animated = window.matchMedia("(hover: hover) and (pointer: fine)").matches && !reduced;
 
     // theme-aware ink: follow the --green token of the active theme
     let ink = [52, 211, 153];
@@ -211,7 +215,7 @@
     }
     onThemeChange = () => {
       refreshInk();
-      if (reduced) draw();
+      draw();
     };
 
     function hexPath(x, y, r, rot) {
@@ -242,13 +246,21 @@
     }
 
     function resize() {
-      dpr = Math.min(2, window.devicePixelRatio || 1);
-      w = window.innerWidth;
-      h = window.innerHeight;
+      const nw = window.innerWidth;
+      const nh = window.innerHeight;
+      // iOS fires resize for every URL-bar collapse/expand while scrolling;
+      // rebuilding the field each time churns canvas buffers for nothing
+      if (Math.abs(nw - w) < 2 && Math.abs(nh - h) < 2) return;
+      w = nw;
+      h = nh;
+      dpr = Math.min(animated ? 2 : 1.5, window.devicePixelRatio || 1);
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = Math.max(24, Math.min(80, Math.round((w * h) / 26000)));
+      const count = Math.max(
+        animated ? 24 : 14,
+        Math.min(animated ? 80 : 36, Math.round((w * h) / (animated ? 26000 : 34000)))
+      );
       hexes = Array.from({ length: count }, () => ({
         x: Math.random() * w,
         y: Math.random() * h,
@@ -260,7 +272,7 @@
         alpha: 0.04 + Math.random() * 0.16,
         filled: Math.random() < 0.18,
       }));
-      if (reduced) draw();
+      draw();
     }
 
     function tick() {
@@ -289,22 +301,24 @@
     }
 
     window.addEventListener("resize", resize, { passive: true });
-    window.addEventListener(
-      "mousemove",
-      (e) => {
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
-      },
-      { passive: true }
-    );
-    window.addEventListener("mouseout", () => {
-      mouse.x = -9999;
-      mouse.y = -9999;
-    });
+    if (animated) {
+      window.addEventListener(
+        "mousemove",
+        (e) => {
+          mouse.x = e.clientX;
+          mouse.y = e.clientY;
+        },
+        { passive: true }
+      );
+      window.addEventListener("mouseout", () => {
+        mouse.x = -9999;
+        mouse.y = -9999;
+      });
+    }
 
     refreshInk();
     resize();
-    if (!reduced) requestAnimationFrame(tick);
+    if (animated) requestAnimationFrame(tick);
   }
 
   /* ============ 4. Scramble/decode text ============ */

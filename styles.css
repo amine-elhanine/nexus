@@ -129,7 +129,10 @@ code {
 
 /* ============ ambient background ============ */
 .aurora { position: fixed; inset: 0; z-index: -2; overflow: hidden; pointer-events: none; }
-.aurora .au { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.5; }
+/* No filter: blur() here on purpose — the radial gradients are already soft,
+   and large fixed blur layers get re-rasterized while scrolling on iOS Safari,
+   which can kill the renderer process ("a problem repeatedly occurred"). */
+.aurora .au { position: absolute; border-radius: 50%; opacity: 0.5; }
 .au-1 { width: 640px; height: 640px; top: -220px; left: -140px; background: radial-gradient(circle, var(--glow), transparent 65%); }
 .au-2 { width: 720px; height: 720px; top: 8%; right: -280px; background: radial-gradient(circle, rgba(45, 132, 251, 0.13), transparent 65%); }
 .au-3 { width: 560px; height: 560px; bottom: -220px; left: 32%; background: radial-gradient(circle, var(--green-soft), transparent 65%); }
@@ -285,6 +288,7 @@ code {
 .hero::after {
   content: ""; position: absolute; left: 50%; bottom: -1px; width: min(760px, 86%);
   height: 1px; transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, rgba(62, 230, 149, 0.35), transparent);
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--green) 35%, transparent), color-mix(in srgb, var(--info) 25%, transparent), transparent);
 }
 .hero-inner {
@@ -316,6 +320,9 @@ code {
   text-wrap: balance; min-height: 2.3em;
 }
 .grad {
+  /* fallback first for iOS < 16.2 (no color-mix): a two-stop gradient,
+     then the richer three-stop version overrides where color-mix works */
+  background: linear-gradient(92deg, var(--green-bright) 10%, var(--info) 90%);
   background: linear-gradient(92deg, var(--green-bright) 10%, color-mix(in srgb, var(--green-bright) 45%, var(--info)) 45%, var(--info) 90%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
