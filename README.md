@@ -58,7 +58,7 @@ theme's `--green` token automatically.
 - **Installer names changed?** — update the `DL_PATTERNS` regexes in `app.js` (they match both dotted and spaced names today).
 - **New theme** — add an `html[data-theme="…"]` token block in `styles.css` and an entry in the `THEMES` list in `app.js` (id, label, swatch color).
 - **Restyle** — edit the `:root` tokens.
-- **Cache-busting** — asset URLs carry `?v=6`; bump when you change CSS/JS.
+- **Cache-busting** — asset URLs carry `?v=8`; bump when you change CSS/JS.
 - **Serve locally** — `npx serve landing_page` or `python -m http.server -d landing_page` (double-clicking `index.html` also works).
 
 ## Accessibility & behavior notes

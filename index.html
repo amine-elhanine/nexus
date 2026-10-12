@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Nexus — Autonomous AI Agent: Code, Draft, Prove</title>
-  <meta name="description" content="Nexus is the autonomous AI desktop agent: a coding agent for any repo, a general assistant that ships real documents, and a grounded research notebook. It doesn't chat. It finishes. Bring your own key — 15 providers including local Ollama." />
+  <title>Nexus — Autonomous AI Desktop Agent: Code, Draft, Prove</title>
+  <meta name="description" content="Nexus is the autonomous AI desktop agent: software engineering across any repo, general assistant delivering real documents and interactive charts, and grounded research with verified citations. 100% local, bring your own key across 15 providers or offline Ollama." />
   <meta name="theme-color" content="#080a0f" />
-  <meta property="og:title" content="Nexus — Autonomous AI Agent" />
-  <meta property="og:description" content="Code it. Draft it. Prove it. One desktop agent for your repos, your documents and your research." />
+  <meta property="og:title" content="Nexus — Autonomous AI Desktop Agent" />
+  <meta property="og:description" content="Code it. Draft it. Prove it. One desktop agent for your repos, real documents, interactive charts, and grounded research." />
   <meta property="og:type" content="website" />
   <link rel="icon" type="image/png" href="icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=7" />
+  <link rel="stylesheet" href="styles.css?v=8" />
   <script>document.documentElement.classList.replace("no-js", "js");</script>
   <script>try { var t = localStorage.getItem("nexus-landing-theme"); if (t && t !== "nexus") document.documentElement.setAttribute("data-theme", t); } catch (e) { }</script>
 </head>
@@ -107,9 +107,9 @@
           </div>
 
           <ul class="hero-chips" data-reveal style="--d:.2s">
-            <li>Bring your own key — 15 providers</li>
-            <li>Runs local models via Ollama</li>
-            <li>MCP · Skills · Subagents</li>
+            <li>Bring your own key — 15 providers or offline Ollama</li>
+            <li>Plugin Marketplace · MCP · LSP intelligence</li>
+            <li>100% local data · Zero telemetry</li>
           </ul>
         </div>
 
@@ -180,13 +180,13 @@
               <h3>Home</h3>
               <span class="mode-sub">general assistant</span>
             </div>
-            <p>The agent that finishes things. Chat, research the web, and get <strong>real files</strong> — Word reports, decks, spreadsheets, PDFs, LaTeX — validated and delivered to your Nexus folder.</p>
+            <p>The agent that finishes things. Chat, research the web, and get <strong>real files</strong> — Word reports, decks, spreadsheets, PDFs, LaTeX — and <strong>inline interactive charts</strong> validated and delivered to your Nexus folder.</p>
             <ul class="mode-list">
+              <li>Interactive in-chat charts — bar, line, pie, scatter, mermaid</li>
               <li>Structured long-term memory — profile, preferences, facts</li>
-              <li>Say “remember…” — every fact has a Forget button</li>
-              <li>Artifacts with magic-byte validation, preview, download</li>
+              <li>Deliverables validated by magic bytes &amp; OpenXML schemas</li>
             </ul>
-            <p class="mode-foot">docx · pptx · xlsx · pdf · md · tex</p>
+            <p class="mode-foot">docx · pptx · xlsx · pdf · charts · tex</p>
           </article>
 
           <!-- CODE -->
@@ -198,13 +198,13 @@
               <h3>Code</h3>
               <span class="mode-sub">coding agent</span>
             </div>
-            <p>Plan / Ask / Auto control over any repo. It inspects, plans, implements — then a <strong>verify supervisor</strong> checks the diff and repairs what fails. Undo is always one click away.</p>
+            <p>Plan / Ask / Auto control over any repo. It inspects, plans, implements — then a <strong>verify supervisor</strong> checks the diff, runs test cascades, and repairs what fails before declaring done.</p>
             <ul class="mode-list">
+              <li>LSP code intelligence (TypeScript, Python, Go, Rust, C++)</li>
               <li>20-deep checkpoints + per-hunk diff discard</li>
               <li>Isolated git worktrees — merge to main or discard</li>
-              <li>Monaco editor, real PTY terminal, daemon manager</li>
             </ul>
-            <p class="mode-foot">AGENTS.md aware · repo map · subagent fleet</p>
+            <p class="mode-foot">LSP enabled · repo map · subagent fleet · plugins</p>
           </article>
 
           <!-- NOTEBOOK -->
@@ -216,13 +216,13 @@
               <h3>Notebook</h3>
               <span class="mode-sub">grounded research</span>
             </div>
-            <p>Q&amp;A over your PDFs, Office docs, YouTube videos and web pages — every claim cited, every answer scored, <strong>refuses to guess</strong> when your files don’t cover it.</p>
+            <p>Q&amp;A over your PDFs, Office docs, YouTube videos and web pages — every claim cited, Net-Guard SSRF protected, and <strong>refuses to guess</strong> when your files don’t cover it.</p>
             <ul class="mode-list">
               <li>Hybrid retrieval: SQLite vectors + BM25 + structure</li>
-              <li>Clickable [S1] citations open the exact passage</li>
+              <li>Clickable [S1] citations open the exact evidence passage</li>
               <li>Studio: reports, decks, graded quizzes, mind maps</li>
             </ul>
-            <p class="mode-foot">hybrid retrieval · studio exports · markdown chats</p>
+            <p class="mode-foot">hybrid retrieval · studio exports · net-guard safe</p>
           </article>
         </div>
 
@@ -231,10 +231,12 @@
           <div class="deep-copy">
             <p class="kicker">mode 01 — home</p>
             <h3>Describe the deliverable.<br /><span class="grad">Receive the file.</span></h3>
-            <p>Home isn’t a chatbot with ambitions — it’s a production line. Say what you need; the research, the drafting and the polishing happen in the background, and a validated file lands in your Nexus folder.</p>
+            <p>Home isn’t a chatbot with ambitions — it’s a production line. Say what you need; the research, drafting, charting, and polishing happen in the background, and a validated file lands in your Nexus folder.</p>
             <ul class="deep-list">
               <li>Real document generation — Word, PowerPoint, Excel, PDF, Markdown, LaTeX</li>
-              <li>Deliverables validated by magic bytes and surfaced as artifacts — no broken files</li>
+              <li>Native interactive charts — bar, hbar, line, area, pie, donut, scatter, radar, and mermaid</li>
+              <li>Supervisor visual auto-embedding — automatically surfaces charts &amp; generated image plots in chat</li>
+              <li>Deliverables validated by magic bytes and OpenXML parsers — no broken files</li>
               <li>Structured long-term memory: profile, preferences, facts, project context</li>
               <li>Say “remember…” — or manage every fact with a Forget button</li>
               <li>Web research through the built-in agent browser, cookies separated per mode</li>
@@ -254,7 +256,7 @@
             </div>
             <p class="dv-note">Every generated file is checked by magic bytes before it reaches your folder — a broken document never ships.</p>
             <div class="dv-chips">
-              <span>.docx</span><span>.pptx</span><span>.xlsx</span><span>.pdf</span><span>.md</span><span>.tex</span>
+              <span>.docx</span><span>.pptx</span><span>.xlsx</span><span>.pdf</span><span>charts</span><span>.tex</span>
             </div>
           </div>
         </div>
@@ -268,9 +270,11 @@
             <ul class="deep-list">
               <li>Plan / Ask / Auto — from read-only exploration to fully autonomous (40/100/150-step budgets)</li>
               <li>Verify-and-repair loop: typecheck + test cascades, up to 5 self-repairs in Auto</li>
+              <li>Language Server Protocol (LSP) across TypeScript, Python, Go, Rust, and C++</li>
+              <li>WASM Tree-sitter symbol indexing and persistent repo outline</li>
               <li>20-deep checkpoints, per-hunk discard, Nexus-only commit reset — your history untouched</li>
               <li>Isolated git worktrees per session: merge to main, abort, or discard cleanly</li>
-              <li>Repo map + persistent symbol index built for large codebases</li>
+              <li>Plugin Marketplace: 1-click skills, specialist agents, rules, and lifecycle hooks</li>
               <li>Respects your rules: AGENTS.md, CLAUDE.md, .cursorrules, .nexus rules</li>
               <li>Plan artifacts with one-click “Approve &amp; Execute”</li>
               <li>Visible subagent fleet: researchers, testers, security reviewers</li>
@@ -295,6 +299,7 @@
             <p>Feed it your PDFs, slides, docs, YouTube videos and web pages. Every claim carries a clickable citation to the exact passage and a groundedness score. If your sources don’t cover it, Nexus refuses rather than guessing.</p>
             <ul class="deep-list">
               <li>Ingests PDF, PPTX, DOCX, CSV, TeX, images, YouTube transcripts and web pages</li>
+              <li>Net-Guard SSRF protection: strictly blocks intranet and localhost probes</li>
               <li>Live pipeline: queued → parsing → chunking → indexing → ready, with crash recovery</li>
               <li>Hybrid retrieval: SQLite vectors + BM25 + structure, with offline fallback embeddings</li>
               <li>Agentic multi-hop search with a full retrieval trace per answer</li>
@@ -320,8 +325,8 @@
     </section>
     <div class="cap-strip" aria-label="More capabilities">
       <div class="cap-track">
-        <span class="cap-chip">20-deep checkpoints</span><span class="cap-chip">per-hunk discard</span><span class="cap-chip">git worktrees</span><span class="cap-chip">out-of-process PTY</span><span class="cap-chip">daemon manager</span><span class="cap-chip">agent browser</span><span class="cap-chip">MCP stdio/http/sse</span><span class="cap-chip">long-term memory</span><span class="cap-chip">Monaco editor</span><span class="cap-chip">repo map + index</span><span class="cap-chip">68 subagents</span><span class="cap-chip">9 themes</span>
-        <span class="cap-chip">20-deep checkpoints</span><span class="cap-chip">per-hunk discard</span><span class="cap-chip">git worktrees</span><span class="cap-chip">out-of-process PTY</span><span class="cap-chip">daemon manager</span><span class="cap-chip">agent browser</span><span class="cap-chip">MCP stdio/http/sse</span><span class="cap-chip">long-term memory</span><span class="cap-chip">Monaco editor</span><span class="cap-chip">repo map + index</span><span class="cap-chip">68 subagents</span><span class="cap-chip">9 themes</span>
+        <span class="cap-chip">Plugin Marketplace</span><span class="cap-chip">interactive charts</span><span class="cap-chip">LSP intelligence</span><span class="cap-chip">Net-Guard security</span><span class="cap-chip">20-deep checkpoints</span><span class="cap-chip">git worktrees</span><span class="cap-chip">out-of-process PTY</span><span class="cap-chip">daemon manager</span><span class="cap-chip">agent browser</span><span class="cap-chip">MCP stdio/http/sse</span><span class="cap-chip">long-term memory</span><span class="cap-chip">Monaco editor</span><span class="cap-chip">repo map + index</span><span class="cap-chip">68 subagents</span><span class="cap-chip">10 themes</span>
+        <span class="cap-chip">Plugin Marketplace</span><span class="cap-chip">interactive charts</span><span class="cap-chip">LSP intelligence</span><span class="cap-chip">Net-Guard security</span><span class="cap-chip">20-deep checkpoints</span><span class="cap-chip">git worktrees</span><span class="cap-chip">out-of-process PTY</span><span class="cap-chip">daemon manager</span><span class="cap-chip">agent browser</span><span class="cap-chip">MCP stdio/http/sse</span><span class="cap-chip">long-term memory</span><span class="cap-chip">Monaco editor</span><span class="cap-chip">repo map + index</span><span class="cap-chip">68 subagents</span><span class="cap-chip">10 themes</span>
       </div>
     </div>
 
@@ -368,9 +373,9 @@
           </table>
 
           <p class="arch-note" data-reveal>
-            Rate limits retry with bounded backoff and resumable checkpoints. Long histories are compacted
-            automatically. A doom-loop breaker stops stuck tool calls. Every run ends in a checkpoint you can
-            “continue” without repeating completed steps.
+            Rate limits retry with bounded backoff and resumable checkpoints. Smart per-target loop prevention
+            redirects the agent from unhelpful web queries. A doom-loop breaker stops stuck tool calls. Every run
+            ends in a checkpoint you can “continue” without repeating completed steps.
           </p>
         </div>
       </div>
@@ -412,8 +417,8 @@
             <p>Your code goes only to the provider you configure. State is a local file; transcripts are local JSONL.</p>
           </article>
           <article class="sec-card" data-reveal style="--d:.25s">
-            <h3>Custom policies</h3>
-            <p><code>.nexus/permissions.json</code> or <code>nexus.permissions</code> in package.json — allow / ask / deny globs per project.</p>
+            <h3>Custom policies &amp; Net-Guard</h3>
+            <p><code>.nexus/permissions.json</code> allow/ask/deny globs, plus Net-Guard SSRF security blocking private IP access.</p>
           </article>
         </div>
 
@@ -454,8 +459,8 @@
             <p>Only to the LLM provider you configure — there is no Nexus cloud, no telemetry service, no middleman. App state lives in one local JSON file; transcripts are local JSONL; secrets are encrypted by your OS keychain.</p>
           </details>
           <details class="faq-item">
-            <summary>How is this different from Copilot or Cursor?</summary>
-            <p>Those are autocomplete-first editors. Nexus is a full autonomous agent for your whole desktop: it plans, executes in real files and shells, verifies its own work, repairs failures, hands you per-hunk undo, and extends beyond code — documents, research, memory — in the same app.</p>
+            <summary>What makes Nexus an autonomous agent rather than an autocomplete tool?</summary>
+            <p>Autocomplete tools suggest lines as you type. Nexus is an autonomous agent for your whole desktop: it takes a goal, plans the implementation, edits files and executes terminal commands, verifies its own work against test suites, repairs failures, provides per-hunk undo, and extends beyond code to document deliverables and grounded research in the same app.</p>
           </details>
           <details class="faq-item">
             <summary>Can the agent destroy my repository?</summary>
@@ -474,8 +479,12 @@
             <p>The Windows Setup ships with electron-updater: a pill in the app shows download progress and restarts to apply. Portable builds re-download. New versions land on GitHub Releases — this page always links the latest.</p>
           </details>
           <details class="faq-item">
+            <summary>What is the Plugin Marketplace?</summary>
+            <p>Nexus includes an in-app extension store in Settings where you can discover, install, and manage plugins. Plugins bundle skills, specialist subagents, coding rules, slash commands, and lifecycle hooks into self-contained units. You can install official plugins, connect custom registry feeds, or link local developer folders to test plugins live.</p>
+          </details>
+          <details class="faq-item">
             <summary>Can I extend the agent?</summary>
-            <p>Extensively: drop <code>SKILL.md</code> files into <code>.nexus/skills</code>, define slash commands, add project rules (<code>AGENTS.md</code>, <code>CLAUDE.md</code>, <code>.cursorrules</code>…), connect MCP servers (stdio/HTTP/SSE), and set allow/ask/deny permission policies per project.</p>
+            <p>Extensively: browse the in-app <strong>Plugin Marketplace</strong> in Settings to install pre-packaged engineering and research suites with one click. You can also drop <code>SKILL.md</code> files into <code>.nexus/skills</code>, define custom slash commands, add project rules (<code>AGENTS.md</code>, <code>CLAUDE.md</code>, <code>.cursorrules</code>…), connect MCP servers (stdio/HTTP/SSE), and set allow/ask/deny permission policies per project.</p>
           </details>
         </div>
       </div>
@@ -543,6 +552,6 @@ npm run dist       # package installers to release/</code></pre>
     </div>
   </footer>
 
-  <script src="app.js?v=7" defer></script>
+  <script src="app.js?v=8" defer></script>
 </body>
 </html>
